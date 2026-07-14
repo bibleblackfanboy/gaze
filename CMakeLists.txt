@@ -8,6 +8,8 @@ add_subdirectory(libs/fltk)
 
 add_executable(dream_curio WIN32 
     src/main.cpp
+    src/logger.cpp
+    src/logger.hpp
 )
 
 target_link_libraries(dream_curio PRIVATE fltk)
