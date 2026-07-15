@@ -13,12 +13,12 @@ enum State {
 struct Marker {
     int x;
     int y;
+    long reaction_in_ms;
 };
 
 class MarkerLogic {
     private:
         Marker markers[20] {};
-        int next_marker = 0;
         int current_marker = -1;
         State current_state = START_SCREEN;
 
@@ -33,7 +33,8 @@ class MarkerLogic {
         Marker const& get_current_marker() const;
         Marker const& get_marker(int index) const;
         int get_current_marker_index() const;
-        int get_next_marker_index() const;
+        long get_reaction() const;
+        void set_reaction(long time);
         State get_state() const;
         void set_state(State state);
 

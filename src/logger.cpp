@@ -12,3 +12,10 @@ void Logger::log(const char* message) {
     display_->insert_position(buffer_->length());
     display_->show_insert_position();
 }
+
+void Logger::reset() {
+    if (!display_ || !buffer_)
+        return;
+    buffer_->text("");
+}
+

@@ -15,4 +15,5 @@ class Logger {
         );
 
         void log(const char* message);
+        void reset();
 };

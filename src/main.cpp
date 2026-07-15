@@ -6,6 +6,7 @@
 #include "MarkerTiming.hpp"
 
 #include <FL/Fl.H>
+#include <FL/Fl_Browser.H>
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Menu_Bar.H>
 #include <FL/Fl_Window.H>
@@ -15,11 +16,10 @@
 Fl_Text_Display* outputBuffer = nullptr;
 Logger* logger = nullptr;
 
+void print_array();
+
 class MarkerWindow : public Fl_Double_Window {
     Fl_Window* parentWindow;
-
-    MarkerLogic logic;
-    MarkerTiming timer;
 
     static void marker_timeout_cb(void* w){
         auto* win = static_cast<MarkerWindow*>(w);
@@ -28,12 +28,15 @@ class MarkerWindow : public Fl_Double_Window {
     }
     static void refresh_cb(void* w) {
         auto* win = static_cast<MarkerWindow*>(w);
-        if (win->logic.has_current_marker())
+        if(win->logic.has_current_marker())
             win->redraw();
         Fl::repeat_timeout(0.03, refresh_cb, w);
     }
 
     public:
+    MarkerLogic logic;
+    MarkerTiming timer;
+
     MarkerWindow(int w, int h, const char * title, Fl_Window* parent): Fl_Double_Window(w, h, title), parentWindow(parent) { 
         Fl::add_timeout(0.03, refresh_cb, this);
     }
@@ -42,32 +45,26 @@ class MarkerWindow : public Fl_Double_Window {
         logic.set_state(PAUSED);
         Fl::remove_timeout(marker_timeout_cb, this);
         fullscreen_off();
-        if (parentWindow)
+        if(parentWindow)
             parentWindow->show();
         hide();
+        print_array();
     }
 
     void show_marker() {
-        if(!logic.has_current_marker())
-            return;
-        const auto& marker = logic.get_current_marker();
-        char buffer[100];
-        sprintf(buffer, "Marker showing at (%d|%d)", marker.x, marker.y);
-        logger->log(buffer);
-        sprintf(buffer, "Reaction time: %ld ms", timer.elapsed_time_ms() - timer.ttl());
-        logger->log(buffer);
-        
-        if (logic.max_markers_reached()) {
+        if(!logic.has_current_marker()) {
             logger->log("Maximum number of markers reached.");
             exit_marker_window();
             return;
         }
+        
         logic.set_state(RUNNING);
         Fl::remove_timeout(marker_timeout_cb, this);
         timer.restart();
         redraw();
         Fl::add_timeout(timer.ttl() / 1000.0, marker_timeout_cb, this);
     }
+
     void draw_centered_text(const char* s) {
         fl_font(FL_HELVETICA_BOLD, 32);
         fl_color(FL_BLACK);
@@ -80,10 +77,10 @@ class MarkerWindow : public Fl_Double_Window {
         Fl_Double_Window::draw();
         switch(logic.get_state()) {
             case START_SCREEN:
-                draw_centered_text("Press SPACE to start");
+                draw_centered_text("Press ENTER to start. Use SPACE to claim markers.");
                 break;
             case PAUSED:
-                draw_centered_text("Press SPACE to resume");
+                draw_centered_text("Press ENTER to resume");
                 break;
             case FAILED:
                 draw_centered_text("Missed timing, try again!");
@@ -110,37 +107,57 @@ class MarkerWindow : public Fl_Double_Window {
             fl_circle(marker.x, marker.y, radius);
         }
 
-        
     }
 
     int handle(int event) override {
         switch (event) {
             case FL_KEYDOWN:
-                if (Fl::event_key() == FL_Escape) {
+                // Escape
+                if(Fl::event_key() == FL_Escape) {
                     do_callback();
                     return 1;
                 }
-                if (Fl::event_key() == ' ') {
+                // Space
+                if(Fl::event_key() == ' ') {
+                    switch(logic.get_state()) {
+                        case RUNNING:
+                            logic.set_reaction(timer.elapsed_time_ms() - timer.ttl());
+                            if(logic.max_markers_reached()) {
+                                exit_marker_window();
+                            } else {
+                            logic.show_next_marker();
+                            show_marker();
+                            }
+                            break;
+
+                        default:
+                            break;
+                    }
+                    return 1;
+                }
+                // Enter
+                if(Fl::event_key() == FL_Enter) {
                     switch(logic.get_state()) {
                         case START_SCREEN:
                             logic.show_next_marker();
                             show_marker();
                             break;
+
                         case PAUSED:
                             show_marker();
                             break;
+
                         case FAILED:
                             show_marker();
+                            timer.restart();
                             break;
-                        case RUNNING:
-                            logic.show_next_marker();
-                            show_marker();
+
+                        default:
                             break;
                     }
                     return 1;
                 }
                 break;
-
             case FL_CLOSE:
                 exit_marker_window();
                 return 1;
@@ -149,63 +166,86 @@ class MarkerWindow : public Fl_Double_Window {
     }
 
     void resume(){
-        if (logic.get_state() != PAUSED) {
+        if(logic.get_state() != PAUSED) {
             return;
         }
         timer.restart();
         Fl::add_timeout(timer.ttl() / 1000.0, marker_timeout_cb, this);
         redraw();
     }
-
-    void generate_new_markers() {
-        logic.generate_markers(this->w(), this->h());
-    }
 };
 
 Fl_Window* mainWin = nullptr;
 MarkerWindow* markerWin = nullptr;
+
+void print_array() {
+    logger->reset();
+    if(markerWin){
+        char buffer[128];
+        for (int i = 0; i < markerWin->logic.get_current_marker_index()+1; i++) {
+            const Marker& marker = markerWin->logic.get_marker(i);
+            snprintf(buffer, sizeof(buffer), "%02d | X = %04d | Y = %04d | Reactiontime = %04ld\n",
+                i + 1, marker.x, marker.y, marker.reaction_in_ms);
+            logger->log(buffer);
+        }
+    }
+}
 
 void marker_close_cb(Fl_Widget* w, void*) {
     auto* mw = static_cast<MarkerWindow*>(w);
     mw->exit_marker_window();
 }
 
+void screen_setup(MarkerWindow* markerWin) {
+    markerWin->show();
+    markerWin->fullscreen();
+    markerWin->resize(0, 0, Fl::w(), Fl::h());
+    markerWin->take_focus();
+}
+
 void start_button_cb(Fl_Widget* w, void*) {
     mainWin = static_cast<Fl_Window*>(w);
-    if (!markerWin) {
+    if(!markerWin) {
         markerWin = new MarkerWindow(0, 0, " ", mainWin);
         markerWin->callback(marker_close_cb);
-        markerWin->show();
-        markerWin->fullscreen();
-        markerWin->resize(0, 0, Fl::w(), Fl::h());
-        markerWin->take_focus();
-        markerWin->generate_new_markers();
+        screen_setup(markerWin);
+        markerWin->logic.generate_markers(markerWin->w(), markerWin->h());
+        mainWin->hide();
     } else {
-        markerWin->show();
-        markerWin->fullscreen();
-        markerWin->resize(0, 0, Fl::w(), Fl::h());
-        markerWin->take_focus();
+        if(markerWin->logic.max_markers_reached()) {
+            return;
+        }
+        screen_setup(markerWin);
         markerWin->resume();
+        mainWin->hide();
     }
-    mainWin->hide();
+}
+
+void reset_button_cb(Fl_Widget* w, void*) {
+    mainWin = static_cast<Fl_Window*>(w);
+    logger->reset();
+    if(markerWin) {
+        markerWin->logic.reset();
+    }
 }
 
 int main(int argc, char **argv) {
 
-    Fl_Window win(400, 400, " ");
+    Fl_Window win(600, 600, " ");
     int button_width = 100;
     int button_height = 40;
-    Fl_Button start_button((win.w() - button_width) / 4, 80, button_width, button_height, "Start");
-    Fl_Button show_array_button((win.w() - button_width) * 3 / 4, 80, button_width, button_height, "Show Array");
+    Fl_Button start_button((win.w() - button_width) / 4, 30, button_width, button_height, "Start");
+    Fl_Button reset_button((win.w() - button_width) * 3 / 4, 30, button_width, button_height, "Reset");
 
     Fl_Text_Buffer* outputBuffer = new Fl_Text_Buffer;
-    int outputBoxWidth = 300;
-    int outputBoxHeight = 200;
-    Fl_Text_Display* outputBox = new Fl_Text_Display((win.w() - outputBoxWidth) / 2, 150, outputBoxWidth, outputBoxHeight);
+    int outputBoxWidth = 400;
+    int outputBoxHeight = 450;
+    Fl_Text_Display* outputBox = new Fl_Text_Display((win.w() - outputBoxWidth) / 2, 100, outputBoxWidth, outputBoxHeight);
     outputBox->buffer(outputBuffer);
     logger = new Logger(outputBox, outputBuffer);
 
     start_button.callback(start_button_cb, &win);
+    reset_button.callback(reset_button_cb, &win);
 
     win.end();
     win.show(argc, argv);
