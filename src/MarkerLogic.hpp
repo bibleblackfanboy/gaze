@@ -18,25 +18,24 @@ struct Marker {
 class MarkerLogic {
     private:
         Marker markers[20] {};
-        int nextMarker = 0;
-        int currentMarker = -1;
-        State currentState = START_SCREEN;
+        int next_marker = 0;
+        int current_marker = -1;
+        State current_state = START_SCREEN;
 
     public:
         MarkerLogic() = default;
 
-        void generateMarkers(int width, int height);
-        bool hasCurrentMarker() const;
-        bool maxMarkersReached() const;
-        void showNextMarker();
+        void generate_markers(int width, int height);
+        bool has_current_marker() const;
+        bool max_markers_reached() const;
+        void show_next_marker();
 
-
-        Marker const& getCurrentMarker() const;
-        Marker const& getMarker(int index) const;
-        int getCurrentMarkerIndex() const;
-        int getNextMarkerIndex() const;
-        State getState() const;
-        void setState(State state);
+        Marker const& get_current_marker() const;
+        Marker const& get_marker(int index) const;
+        int get_current_marker_index() const;
+        int get_next_marker_index() const;
+        State get_state() const;
+        void set_state(State state);
 
         void reset();
 };

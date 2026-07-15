@@ -3,6 +3,7 @@
 
 #include "logger.hpp"
 #include "MarkerLogic.hpp"
+#include "MarkerTiming.hpp"
 
 #include <FL/Fl.H>
 #include <FL/Fl_Button.H>
@@ -16,25 +17,20 @@ Logger* logger = nullptr;
 
 class MarkerWindow : public Fl_Double_Window {
     Fl_Window* parentWindow;
-    std::chrono::steady_clock::time_point marker_start_time = std::chrono::steady_clock::now();
 
     MarkerLogic logic;
-    int ttl_in_ms = 5000;
+    MarkerTiming timer;
 
     static void marker_timeout_cb(void* w){
         auto* win = static_cast<MarkerWindow*>(w);
-        win->logic.setState(FAILED);
+        win->logic.set_state(FAILED);
         win->redraw();
     }
     static void refresh_cb(void* w) {
         auto* win = static_cast<MarkerWindow*>(w);
-        if (win->logic.hasCurrentMarker())
+        if (win->logic.has_current_marker())
             win->redraw();
         Fl::repeat_timeout(0.03, refresh_cb, w);
-    }
-
-    long elapsed_ms() const {
-        return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - marker_start_time).count();
     }
 
     public:
@@ -43,7 +39,7 @@ class MarkerWindow : public Fl_Double_Window {
     }
 
     void exit_marker_window() {
-        logic.setState(PAUSED);
+        logic.set_state(PAUSED);
         Fl::remove_timeout(marker_timeout_cb, this);
         fullscreen_off();
         if (parentWindow)
@@ -52,25 +48,25 @@ class MarkerWindow : public Fl_Double_Window {
     }
 
     void show_marker() {
-        if(!logic.hasCurrentMarker())
+        if(!logic.has_current_marker())
             return;
-        const auto& marker = logic.getCurrentMarker();
+        const auto& marker = logic.get_current_marker();
         char buffer[100];
         sprintf(buffer, "Marker showing at (%d|%d)", marker.x, marker.y);
         logger->log(buffer);
-        sprintf(buffer, "Reaction time: %ld ms", elapsed_ms() - ttl_in_ms);
+        sprintf(buffer, "Reaction time: %ld ms", timer.elapsed_time_ms() - timer.ttl());
         logger->log(buffer);
         
-        if (logic.maxMarkersReached()) {
+        if (logic.max_markers_reached()) {
             logger->log("Maximum number of markers reached.");
             exit_marker_window();
             return;
         }
-        logic.setState(RUNNING);
+        logic.set_state(RUNNING);
         Fl::remove_timeout(marker_timeout_cb, this);
-        marker_start_time = std::chrono::steady_clock::now();
+        timer.restart();
         redraw();
-        Fl::add_timeout(ttl_in_ms / 1000.0, marker_timeout_cb, this);
+        Fl::add_timeout(timer.ttl() / 1000.0, marker_timeout_cb, this);
     }
     void draw_centered_text(const char* s) {
         fl_font(FL_HELVETICA_BOLD, 32);
@@ -82,7 +78,7 @@ class MarkerWindow : public Fl_Double_Window {
     }
     void draw() override {
         Fl_Double_Window::draw();
-        switch(logic.getState()) {
+        switch(logic.get_state()) {
             case START_SCREEN:
                 draw_centered_text("Press SPACE to start");
                 break;
@@ -96,11 +92,11 @@ class MarkerWindow : public Fl_Double_Window {
                 break;
         }
 
-        if(logic.hasCurrentMarker() && logic.getState() == RUNNING) {
-            const auto& marker = logic.getCurrentMarker();
+        if(logic.has_current_marker() && logic.get_state() == RUNNING) {
+            const auto& marker = logic.get_current_marker();
             int marker_radius = 10;
             int ring_start_radius = 15 * marker_radius;
-            double progress = std::min(1.0, (double)elapsed_ms() / (ttl_in_ms - 500));
+            double progress = timer.marker_progress();
             int radius = static_cast<int>(marker_radius + ((ring_start_radius) * (1.0 - progress)));
 
             // Marker
@@ -125,9 +121,9 @@ class MarkerWindow : public Fl_Double_Window {
                     return 1;
                 }
                 if (Fl::event_key() == ' ') {
-                    switch(logic.getState()) {
+                    switch(logic.get_state()) {
                         case START_SCREEN:
-                            logic.showNextMarker();
+                            logic.show_next_marker();
                             show_marker();
                             break;
                         case PAUSED:
@@ -137,7 +133,7 @@ class MarkerWindow : public Fl_Double_Window {
                             show_marker();
                             break;
                         case RUNNING:
-                            logic.showNextMarker();
+                            logic.show_next_marker();
                             show_marker();
                             break;
                     }
@@ -153,16 +149,16 @@ class MarkerWindow : public Fl_Double_Window {
     }
 
     void resume(){
-        if (logic.getState() != PAUSED) {
+        if (logic.get_state() != PAUSED) {
             return;
         }
-        marker_start_time = std::chrono::steady_clock::now();
-        Fl::add_timeout(ttl_in_ms / 1000.0, marker_timeout_cb, this);
+        timer.restart();
+        Fl::add_timeout(timer.ttl() / 1000.0, marker_timeout_cb, this);
         redraw();
     }
 
     void generate_new_markers() {
-        logic.generateMarkers(this->w(), this->h());
+        logic.generate_markers(this->w(), this->h());
     }
 };
 
