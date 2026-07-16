@@ -3,6 +3,8 @@
 #include <cstdlib>
 #include <iostream>
 
+#define MARKER_AMOUNT 5
+
 enum State {
     START_SCREEN,
     RUNNING,
@@ -19,7 +21,7 @@ struct Marker {
 
 class MarkerLogic {
     private:
-        Marker markers[20] {};
+        Marker markers[MARKER_AMOUNT] {};
         int current_marker = -1;
         State current_state = START_SCREEN;
 

@@ -1,8 +1,8 @@
 #include "MarkerLogic.hpp"
 
-// Generate 20 markers for array within width and height
+// Generate [MARKER_AMOUNT] markers for array within width and height
 void MarkerLogic::generate_markers(int width, int height) {
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < MARKER_AMOUNT; i++) {
         markers[i] = {
             rand() % width,
             rand() % height
@@ -13,17 +13,17 @@ void MarkerLogic::generate_markers(int width, int height) {
 // Check if currentmarker is active
 bool MarkerLogic::has_current_marker() const {
     return current_marker >= 0 &&
-           current_marker < 20;
+           current_marker < MARKER_AMOUNT;
 }
 
-// Check if maximum index for array has been reached [20]
+// Check if maximum index for array has been reached [MARKER_AMOUNT]
 bool MarkerLogic::max_markers_reached() const {
-    return current_marker >= 19;
+    return current_marker >= (MARKER_AMOUNT-1);
 }
 
 // Currentmarker index is increased by one
 void MarkerLogic::show_next_marker() {
-    if(current_marker < 19) {
+    if(current_marker < (MARKER_AMOUNT-1)) {
         ++current_marker;
     } else {
         current_marker = -1;
