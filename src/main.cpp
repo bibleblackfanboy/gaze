@@ -30,7 +30,7 @@ class MarkerWindow : public Fl_Double_Window {
         auto* win = static_cast<MarkerWindow*>(w);
         if(win->logic.has_current_marker())
             win->redraw();
-        Fl::repeat_timeout(0.03, refresh_cb, w);
+        Fl::repeat_timeout(0.016, refresh_cb, w);
     }
 
     public:
@@ -38,7 +38,7 @@ class MarkerWindow : public Fl_Double_Window {
     MarkerTiming timer;
 
     MarkerWindow(int w, int h, const char * title, Fl_Window* parent): Fl_Double_Window(w, h, title), parentWindow(parent) { 
-        Fl::add_timeout(0.03, refresh_cb, this);
+        Fl::add_timeout(0.016, refresh_cb, this);
     }
 
     void exit_marker_window() {
@@ -49,6 +49,10 @@ class MarkerWindow : public Fl_Double_Window {
             parentWindow->show();
         hide();
         print_array();
+        if(logic.max_markers_reached()) {
+            logger->save(logic.get_all_markers());
+            logger->log("Positions have been saved");
+        }
     }
 
     void show_marker() {
@@ -80,29 +84,35 @@ class MarkerWindow : public Fl_Double_Window {
                 draw_centered_text("Press ENTER to start. Use SPACE to claim markers.");
                 break;
             case PAUSED:
-                draw_centered_text("Press ENTER to resume");
+                draw_centered_text("Press ENTER to resume.");
                 break;
             case FAILED:
                 draw_centered_text("Missed timing, try again!");
                 break;
+            case FINISH:
+                draw_centered_text("Finished! Press ENTER to exit.");
             case RUNNING:
                 break;
         }
 
         if(logic.has_current_marker() && logic.get_state() == RUNNING) {
             const auto& marker = logic.get_current_marker();
-            int marker_radius = 10;
-            int ring_start_radius = 15 * marker_radius;
+            int marker_radius = 5;
+            int ring_start_radius = 50 * marker_radius;
             double progress = timer.marker_progress();
             int radius = static_cast<int>(marker_radius + ((ring_start_radius) * (1.0 - progress)));
 
             // Marker
             fl_line_style(0);
-            fl_color(FL_RED);
+            if(progress == 1){
+                fl_color(FL_GREEN);
+            } else {
+                fl_color(FL_RED);
+            }
             fl_pie(marker.x - marker_radius, marker.y - marker_radius, 2 * marker_radius, 2 * marker_radius, 0, 360);
 
             // Ring
-            fl_line_style(FL_SOLID, 2);
+            fl_line_style(FL_SOLID, 1);
             fl_color(FL_BLACK);
             fl_circle(marker.x, marker.y, radius);
         }
@@ -121,13 +131,19 @@ class MarkerWindow : public Fl_Double_Window {
                 if(Fl::event_key() == ' ') {
                     switch(logic.get_state()) {
                         case RUNNING:
-                            logic.set_reaction(timer.elapsed_time_ms() - timer.ttl());
+                            logic.set_reaction(timer.elapsed_time_ms() - timer.ttl() + timer.get_reaction_time());
+                            if(timer.marker_progress() != 1){
+                                logic.set_state(FAILED);
+                                Fl::remove_timeout(marker_timeout_cb, this);
+                                break;
+                            }
                             if(logic.max_markers_reached()) {
-                                exit_marker_window();
-                            } else {
+                                logic.set_state(FINISH);
+                                Fl::remove_timeout(marker_timeout_cb, this);
+                                break;
+                            }
                             logic.show_next_marker();
                             show_marker();
-                            }
                             break;
 
                         default:
@@ -151,6 +167,9 @@ class MarkerWindow : public Fl_Double_Window {
                             show_marker();
                             timer.restart();
                             break;
+
+                        case FINISH:
+                            exit_marker_window();
 
                         default:
                             break;
@@ -184,7 +203,7 @@ void print_array() {
         char buffer[128];
         for (int i = 0; i < markerWin->logic.get_current_marker_index()+1; i++) {
             const Marker& marker = markerWin->logic.get_marker(i);
-            snprintf(buffer, sizeof(buffer), "%02d | X = %04d | Y = %04d | Reactiontime = %04ld\n",
+            snprintf(buffer, sizeof(buffer), "%02d | X = %04d | Y = %04d | Time = %04ld",
                 i + 1, marker.x, marker.y, marker.reaction_in_ms);
             logger->log(buffer);
         }
@@ -203,7 +222,7 @@ void screen_setup(MarkerWindow* markerWin) {
     markerWin->take_focus();
 }
 
-void start_button_cb(Fl_Widget* w, void*) {
+void start_button_cb(Fl_Widget*, void* w) {
     mainWin = static_cast<Fl_Window*>(w);
     if(!markerWin) {
         markerWin = new MarkerWindow(0, 0, " ", mainWin);

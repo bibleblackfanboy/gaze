@@ -41,6 +41,11 @@ Marker const& MarkerLogic::get_marker(int index) const {
     return markers[index];
 }
 
+// Get marker from array at index
+const Marker* MarkerLogic::get_all_markers() const {
+    return markers;
+}
+
 // Get currentmarker index
 int MarkerLogic::get_current_marker_index() const {
     return current_marker;

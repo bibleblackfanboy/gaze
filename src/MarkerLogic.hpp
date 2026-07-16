@@ -7,7 +7,8 @@ enum State {
     START_SCREEN,
     RUNNING,
     PAUSED,
-    FAILED
+    FAILED,
+    FINISH
 };
 
 struct Marker {
@@ -32,6 +33,7 @@ class MarkerLogic {
 
         Marker const& get_current_marker() const;
         Marker const& get_marker(int index) const;
+        const Marker* get_all_markers() const;
         int get_current_marker_index() const;
         long get_reaction() const;
         void set_reaction(long time);

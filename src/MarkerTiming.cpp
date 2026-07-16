@@ -27,3 +27,7 @@ int MarkerTiming::ttl() const {
 bool MarkerTiming::expired() const {
     return elapsed_time_ms() >= ttl_ms;
 };
+
+int MarkerTiming::get_reaction_time() const {
+    return reaction_time;
+}
