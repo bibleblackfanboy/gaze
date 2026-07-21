@@ -50,7 +50,7 @@ class MarkerWindow : public Fl_Double_Window {
         hide();
         print_array();
         if(logic.max_markers_reached()) {
-            logger->save(logic.get_all_markers());
+            logger->save(logic.get_all_markers(), MARKER_AMOUNT);
             logger->log("Positions have been saved");
         }
     }

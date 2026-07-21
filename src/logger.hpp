@@ -22,6 +22,6 @@ class Logger {
         );
 
         void log(const char* message);
-        void save(const Marker* marker_array);
+        void save(const Marker* marker_array, int marker_count);
         void reset();
 };

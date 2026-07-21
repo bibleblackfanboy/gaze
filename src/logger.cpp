@@ -13,7 +13,7 @@ void Logger::log(const char* message) {
     display_->show_insert_position();
 }
 
-void Logger::save(const Marker* marker_array) {
+void Logger::save(const Marker* marker_array, int marker_count) {
     std::time_t t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
     std::stringstream ss;
@@ -25,7 +25,7 @@ void Logger::save(const Marker* marker_array) {
         return;
     }
 
-    for(int i = 0; i < 20; i++) {
+    for(int i = 0; i < marker_count; i++) {
         datei << marker_array[i].x << ";"
               << marker_array[i].y << "\n";
     }
