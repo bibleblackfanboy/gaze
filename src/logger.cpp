@@ -26,8 +26,8 @@ void Logger::save(const Marker* marker_array, int marker_count) {
     }
 
     for(int i = 0; i < marker_count; i++) {
-        datei << marker_array[i].x << ";"
-              << marker_array[i].y << "\n";
+        datei << marker_array[i].x_norm << ";"
+              << marker_array[i].y_norm << "\n";
     }
 }
 

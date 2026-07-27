@@ -3,10 +3,11 @@
 // Generate [MARKER_AMOUNT] markers for array within width and height
 void MarkerLogic::generate_markers(int width, int height) {
     for (int i = 0; i < MARKER_AMOUNT; i++) {
-        markers[i] = {
-            rand() % width,
-            rand() % height
-        };
+        markers[i].x = rand() % width;
+        markers[i].y = rand() % height;
+            
+        markers[i].x_norm = static_cast<double>(markers[i].x) / width;
+        markers[i].y_norm = static_cast<double>(markers[i].y) / height;
     }
 }
 

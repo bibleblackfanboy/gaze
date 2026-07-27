@@ -49,10 +49,6 @@ class MarkerWindow : public Fl_Double_Window {
             parentWindow->show();
         hide();
         print_array();
-        if(logic.max_markers_reached()) {
-            logger->save(logic.get_all_markers(), MARKER_AMOUNT);
-            logger->log("Positions have been saved");
-        }
     }
 
     void show_marker() {
@@ -248,13 +244,28 @@ void reset_button_cb(Fl_Widget* w, void*) {
     }
 }
 
+void save_button_cb(Fl_Widget* w, void*){
+    mainWin = static_cast<Fl_Window*>(w);
+    if(markerWin && markerWin->logic.max_markers_reached()) {
+        logger->save(markerWin->logic.get_all_markers(), MARKER_AMOUNT);
+        logger->log("Positions have been saved");
+    } else {
+        logger->log("Cannot save yet. Test must be finished");
+    }
+}
+
 int main(int argc, char **argv) {
 
-    Fl_Window win(600, 600, " ");
+    Fl_Window win(100, 50, 800, 600, " ");
+
+    Fl_Menu_Bar menu(0, 0, 800, 25);
+    menu.add("Reset", FL_CTRL + "r", reset_button_cb);
+    menu.add("Calibration");
+
     int button_width = 100;
     int button_height = 40;
-    Fl_Button start_button((win.w() - button_width) / 4, 30, button_width, button_height, "Start");
-    Fl_Button reset_button((win.w() - button_width) * 3 / 4, 30, button_width, button_height, "Reset");
+    Fl_Button start_button((win.w() - button_width) / 4, 40, button_width, button_height, "Start");
+    Fl_Button reset_button((win.w() - button_width) * 3 / 4, 40, button_width, button_height, "Save");
 
     Fl_Text_Buffer* outputBuffer = new Fl_Text_Buffer;
     int outputBoxWidth = 400;
@@ -264,7 +275,7 @@ int main(int argc, char **argv) {
     logger = new Logger(outputBox, outputBuffer);
 
     start_button.callback(start_button_cb, &win);
-    reset_button.callback(reset_button_cb, &win);
+    reset_button.callback(save_button_cb, &win);
 
     win.end();
     win.show(argc, argv);

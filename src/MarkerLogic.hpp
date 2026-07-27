@@ -17,6 +17,8 @@ struct Marker {
     int x;
     int y;
     long reaction_in_ms;
+    double x_norm;
+    double y_norm;
 };
 
 class MarkerLogic {
