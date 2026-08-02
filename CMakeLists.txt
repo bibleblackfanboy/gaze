@@ -12,11 +12,18 @@ add_executable(dream_curio WIN32
     src/logger.hpp
     src/logger.cpp
 
+    src/State.hpp
+
+    src/BaseWindow.hpp
+    src/BaseWindow.cpp
+    
     src/MarkerLogic.hpp
     src/MarkerLogic.cpp
-
     src/MarkerTiming.hpp
     src/MarkerTiming.cpp
+    src/MarkerWindow.hpp
+    src/MarkerWindow.cpp
+
 )
 
 target_link_libraries(dream_curio PRIVATE fltk)
