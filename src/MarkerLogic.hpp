@@ -3,15 +3,9 @@
 #include <cstdlib>
 #include <iostream>
 
-#define MARKER_AMOUNT 5
+#include "State.hpp"
 
-enum State {
-    START_SCREEN,
-    RUNNING,
-    PAUSED,
-    FAILED,
-    FINISH
-};
+#define MARKER_AMOUNT 5
 
 struct Marker {
     int x;

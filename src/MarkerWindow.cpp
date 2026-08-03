@@ -10,8 +10,7 @@
 extern Logger* logger;
 
 MarkerWindow::MarkerWindow(int w, int h, const char* title, Fl_Window* parent)
-    : BaseWindow(w, h, title, parent) {
-}
+    : BaseWindow(w, h, title, parent) {}
 
 void MarkerWindow::marker_timeout_cb(void* w) {
     auto* win = static_cast<MarkerWindow*>(w);
@@ -81,7 +80,7 @@ void MarkerWindow::draw() {
         int marker_radius = 5;
         int ring_start_radius = 50 * marker_radius;
         double progress = timer.marker_progress();
-        int radius = static_cast<int>(marker_radius + ((ring_start_radius) * (1.0 - progress)));
+        int claim_radius = static_cast<int>(marker_radius + ((ring_start_radius) * (1.0 - progress)));
 
         // Marker
         fl_line_style(0);
@@ -95,7 +94,7 @@ void MarkerWindow::draw() {
         // Ring
         fl_line_style(FL_SOLID, 1);
         fl_color(FL_BLACK);
-        fl_circle(marker.x, marker.y, radius);
+        fl_circle(marker.x, marker.y, claim_radius);
     }
 }
 
@@ -140,7 +139,12 @@ int MarkerWindow::handle(int event) {
                         break;
 
                     case PAUSED:
-                        show_marker();
+                        if(logic.get_current_marker_index() >= 0) {
+                            show_marker();
+                        }else {
+                            logic.show_next_marker();
+                            show_marker();
+                        }
                         break;
 
                     case FAILED:

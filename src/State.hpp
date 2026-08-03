@@ -1,6 +1,7 @@
 #pragma once
 
-enum TestState {
+// program states for logic
+enum State {
     START_SCREEN,
     RUNNING,
     PAUSED,

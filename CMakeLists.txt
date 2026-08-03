@@ -16,7 +16,7 @@ add_executable(dream_curio WIN32
 
     src/BaseWindow.hpp
     src/BaseWindow.cpp
-    
+
     src/MarkerLogic.hpp
     src/MarkerLogic.cpp
     src/MarkerTiming.hpp
@@ -24,6 +24,15 @@ add_executable(dream_curio WIN32
     src/MarkerWindow.hpp
     src/MarkerWindow.cpp
 
+    src/CalibrationLogic.hpp
+    src/CalibrationLogic.cpp
+    src/CalibrationWindow.hpp
+    src/CalibrationWindow.cpp
+
+    src/TrackingLogic.hpp
+    src/TrackingLogic.cpp
+    src/TrackingWindow.hpp
+    src/TrackingWindow.cpp
 )
 
 target_link_libraries(dream_curio PRIVATE fltk)

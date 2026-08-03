@@ -4,9 +4,6 @@
 #include "MarkerLogic.hpp"
 #include "MarkerTiming.hpp"
 
-#include <FL/Fl_Double_Window.H>
-#include <FL/Fl_Window.H>
-
 class MarkerWindow : public BaseWindow {
 public:
     MarkerWindow(int w, int h, const char* title, Fl_Window* parent);

@@ -29,7 +29,6 @@ void MarkerLogic::show_next_marker() {
     } else {
         current_marker = -1;
     }
-
 }
 
 // Get current marker from array. Marker contains x and y position.
