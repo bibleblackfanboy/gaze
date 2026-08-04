@@ -29,7 +29,7 @@ void TrackingWindow::update_cb(void* w) {
     win->logic.update(UPDATE_INTERVAL);
     win->redraw();
     if (win->logic.is_finished()) {
-        win->logic.set_state(FINISH);
+        win->logic.set_state(SHOW_FINISH);
         win->redraw();
         return;
     }
@@ -40,7 +40,7 @@ void TrackingWindow::draw() {
     Fl_Double_Window::draw();
     switch(logic.get_state()) {
         case START_SCREEN:
-            draw_centered_text("Tracking: Press Enter to start");
+            draw_centered_text("Tracking: Follow the blue dot");
             break;
         case RUNNING:
             break;
@@ -54,11 +54,38 @@ void TrackingWindow::draw() {
             break;
     }
 
-    if (logic.get_state() == RUNNING) {
-        auto pos = logic.get_current_position();
+    auto pos = logic.get_current_position();
+    // log current position?
+
+    if(logic.get_state() == SHOW_START) {
+        // lines
+        fl_color(FL_DARK3);
+        fl_line_style(FL_SOLID, 1);
+        fl_line(0, pos.y, w(), pos.y);  // horizontal
+        fl_line(pos.x, 0, pos.x, h());  // vertical
+        // dot
+        fl_color(FL_BLUE);
+        fl_pie(pos.x - 5, pos.y - 5, 10, 10, 0, 360);
+
+    }
+
+    if(logic.get_state() == RUNNING) {
+        // dot
         int marker_radius = 5;
         fl_color(FL_BLUE);
         fl_pie(pos.x - marker_radius, pos.y - marker_radius, marker_radius * 2, marker_radius * 2, 0, 360);
+
+    }
+
+    if(logic.get_state() == SHOW_FINISH) {
+        // lines
+        fl_color(FL_DARK3);
+        fl_line_style(FL_SOLID, 1);
+        fl_line(0, pos.y, w(), pos.y);  // horizontal
+        fl_line(pos.x, 0, pos.x, h());  // vertical
+        // dot
+        fl_color(FL_BLUE);
+        fl_pie(pos.x - 5, pos.y - 5, 10, 10, 0, 360);
     }
 }
 
@@ -70,11 +97,29 @@ int TrackingWindow::handle(int event) {
                 exit_window();
                 return 1;
             }
+            // Space
+            if (Fl::event_key() == ' ') {
+                switch (logic.get_state()) {
+                    case SHOW_START:
+                        start_tracking();
+                        break;
+                    case SHOW_FINISH:
+                        logic.set_state(FINISH);
+                        redraw();
+                        break;
+                    default:
+                        break;
+                }
+            }
             // Enter
             if (Fl::event_key() == FL_Enter) {
                 switch(logic.get_state()) {
                     case START_SCREEN:
-                        start_tracking();
+                        logic.reset();
+                        logic.set_state(SHOW_START);
+                        redraw();
+                        break;
+                    case RUNNING:
                         break;
                     case PAUSED:
                         logic.reset();

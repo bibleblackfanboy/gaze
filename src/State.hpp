@@ -6,5 +6,7 @@ enum State {
     RUNNING,
     PAUSED,
     FAILED,
-    FINISH
+    FINISH,
+    SHOW_START,
+    SHOW_FINISH
 };

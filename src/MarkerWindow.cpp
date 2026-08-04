@@ -173,6 +173,5 @@ void MarkerWindow::resume() {
         return;
     }
     timer.restart();
-    Fl::add_timeout(timer.ttl() / 1000.0, marker_timeout_cb, this);
     redraw();
 }

@@ -73,7 +73,7 @@ void TrackingLogic::update(double delta_seconds) {
     path_progress += (duration > 0.0 ? delta_seconds / duration : 1.0);
 
     while(path_progress >= 1.0) {
-        if(current_waypoint_index < last_waypoint_index) {
+        if(current_waypoint_index >= last_waypoint_index) {
             current_waypoint_index = last_waypoint_index;
             path_progress = 1.0;
             finished = true;
@@ -105,7 +105,7 @@ TrackingPoint TrackingLogic::get_current_position() const {
 
     int x = a.x + static_cast<int>((b.x - a.x) * eased_progress);
     int y = a.y + static_cast<int>((b.y - a.y) * eased_progress);
-
+    
     return {x, y};
 }
 
