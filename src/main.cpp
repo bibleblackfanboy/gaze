@@ -39,8 +39,9 @@ void tracking_close_cb(Fl_Widget* w, void*) {
 
 void screen_setup(Fl_Double_Window* win) {
     win->show();
-    win->fullscreen();
-    win->resize(0, 0, Fl::w(), Fl::h());
+    int X, Y, W, H;
+    Fl::screen_xywh(X, Y, W, H);
+    win->resize(X, Y, W, H);
     win->take_focus();
 }
 
@@ -113,7 +114,7 @@ void reset_button_cb(Fl_Widget* w, void*) {
     }
 }
 
-void save_button_cb(Fl_Widget* w, void*){
+void save_button_cb(Fl_Widget* w, void*) {
     mainWin = static_cast<Fl_Window*>(w);
     if(markerWin && markerWin->logic.max_markers_reached()) {
         logger->save(markerWin->logic.get_all_markers(), MARKER_AMOUNT);
@@ -123,12 +124,22 @@ void save_button_cb(Fl_Widget* w, void*){
     }
 }
 
+void fullscreen_cb(Fl_Widget* w, void*) {
+    Fl_Window* mainWin = w->window();
+    if(mainWin->fullscreen_active()) {
+        mainWin->fullscreen_off();
+    } else {
+        mainWin->fullscreen();
+    }
+}
+
 int main(int argc, char **argv) {
     Fl_Window win(100, 50, 800, 600, " ");
 
     Fl_Menu_Bar menu(0, 0, 800, 25);
     menu.add("Reset", FL_CTRL + "r", reset_button_cb);
     menu.add("Save", FL_CTRL + "s", save_button_cb);
+    menu.add("Fullscreen", 0, fullscreen_cb);
 
     int button_width = 100;
     int button_height = 40;
